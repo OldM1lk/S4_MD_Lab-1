@@ -15,6 +15,8 @@ class WeatherViewModel: ViewModel() {
     val weatherData: LiveData<WeatherForecast> get() = _weatherData
     private val _errorData = MutableLiveData<String?>()
     val errorData: LiveData<String?> get() = _errorData
+    private val _isCelsius = MutableLiveData(true)
+    val isCelsius: LiveData<Boolean> get() = _isCelsius
 
     fun fetchWeather(cityName: String) {
         val appid = BuildConfig.OPEN_WEATHER_API_KEY
@@ -39,5 +41,17 @@ class WeatherViewModel: ViewModel() {
 
     fun clearErrors() {
         _errorData.value = null
+    }
+
+    fun toggleTemperatureUnit() {
+        _isCelsius.value = !_isCelsius.value!!
+    }
+
+    fun convertTemperature(temp: Double): String {
+        return if (_isCelsius.value == true) {
+            String.format("%.0f °C", temp - 273.15)
+        } else {
+            String.format("%.0f °F", temp)
+        }
     }
 }

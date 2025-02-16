@@ -33,6 +33,7 @@ fun WeatherView(viewModel: WeatherViewModel = viewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val openDialog = remember { mutableStateOf(false) }
+    val isCelsius by viewModel.isCelsius.observeAsState(true)
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Погода") }) },
@@ -72,32 +73,26 @@ fun WeatherView(viewModel: WeatherViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (errorMessage != null) {
-                openDialog.value = true
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text(text = "°F", fontSize = 16.sp, modifier = Modifier.padding(end = 4.dp))
+                Switch(
+                    checked = isCelsius,
+                    onCheckedChange = { viewModel.toggleTemperatureUnit() }
+                )
+                Text(text = "°C", fontSize = 16.sp, modifier = Modifier.padding(start = 4.dp))
             }
 
-            if (openDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { openDialog.value = false },
-                    title = { Text("Ошибка") },
-                    text = { Text(errorMessage ?: "Неизвестная ошибка") },
-                    confirmButton = {
-                        Button(onClick = {
-                            openDialog.value = false
-                            viewModel.clearErrors()
-                        }) {
-                            Text("OK")
-                        }
-                    }
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
                 weather?.let { weather ->
                     itemsIndexed(weather.list) {index, item ->
-                        WeatherItem(weather = weather.list[index])
+                        WeatherItem(weather = weather.list[index], isCelsius = isCelsius, viewModel = viewModel)
                     }
                 } ?: item {
                     Text("Данных пока нет", modifier = Modifier.padding(16.dp))
@@ -105,10 +100,30 @@ fun WeatherView(viewModel: WeatherViewModel = viewModel()) {
             }
         }
     }
+
+    if (errorMessage != null) {
+        openDialog.value = true
+    }
+
+    if (openDialog.value) {
+        AlertDialog(
+            onDismissRequest = { openDialog.value = false },
+            title = { Text("Ошибка") },
+            text = { Text(errorMessage ?: "Неизвестная ошибка") },
+            confirmButton = {
+                Button(onClick = {
+                    openDialog.value = false
+                    viewModel.clearErrors()
+                }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun WeatherItem(weather: WeatherEntry) {
+fun WeatherItem(weather: WeatherEntry, isCelsius: Boolean, viewModel: WeatherViewModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,8 +134,9 @@ fun WeatherItem(weather: WeatherEntry) {
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            Text(text = String.format("Температура: %.0f °C", weather.main.temp - 273.15), fontSize = 20.sp)
-            Text(text = "Давление: ${weather.main.pressure} Па", fontSize = 16.sp)
+            Text(text = "Дата: ${weather.dt_txt}", fontSize = 16.sp)
+            Text(text = "Температура: ${viewModel.convertTemperature(weather.main.temp)}" , fontSize = 16.sp)
+            Text(text = String.format("Давление: %.0f мм рт. ст.", weather.main.grnd_level * 100 / 133.3), fontSize = 16.sp)
             GlideImage(
                 imageModel = {"https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png" },
                 modifier = Modifier.size(48.dp)
