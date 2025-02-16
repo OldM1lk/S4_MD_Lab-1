@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lab_1.ui.theme.Lab_1Theme
 import com.skydoves.landscapist.glide.GlideImage
+import kotlinx.coroutines.launch
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,9 +29,14 @@ import com.skydoves.landscapist.glide.GlideImage
 fun WeatherView(viewModel: WeatherViewModel = viewModel()) {
     var city by remember { mutableStateOf("Кемерово") }
     val weather by viewModel.weatherData.observeAsState()
+    val errorMessage by viewModel.errorData.observeAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val openDialog = remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Погода") }) }
+        topBar = { TopAppBar(title = { Text("Погода") }) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -52,7 +58,12 @@ fun WeatherView(viewModel: WeatherViewModel = viewModel()) {
                 )
 
                 Button(
-                    onClick = { viewModel.fetchWeather(city) },
+                    onClick = {
+                        viewModel.fetchWeather(city)
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Загрузка...")
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Найти")
@@ -60,6 +71,26 @@ fun WeatherView(viewModel: WeatherViewModel = viewModel()) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            if (errorMessage != null) {
+                openDialog.value = true
+            }
+
+            if (openDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { openDialog.value = false },
+                    title = { Text("Ошибка") },
+                    text = { Text(errorMessage ?: "Неизвестная ошибка") },
+                    confirmButton = {
+                        Button(onClick = {
+                            openDialog.value = false
+                            viewModel.clearErrors()
+                        }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize()

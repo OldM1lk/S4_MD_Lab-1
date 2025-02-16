@@ -13,6 +13,8 @@ class WeatherViewModel: ViewModel() {
     private val weatherApiServices = Common.retrofitService
     private val _weatherData = MutableLiveData<WeatherForecast>()
     val weatherData: LiveData<WeatherForecast> get() = _weatherData
+    private val _errorData = MutableLiveData<String?>()
+    val errorData: LiveData<String?> get() = _errorData
 
     fun fetchWeather(cityName: String) {
         val appid = BuildConfig.OPEN_WEATHER_API_KEY
@@ -22,11 +24,20 @@ class WeatherViewModel: ViewModel() {
                 override fun onResponse(call: Call<WeatherForecast>, response: Response<WeatherForecast>) {
                     if (response.isSuccessful) {
                         _weatherData.value = response.body()
+                        _errorData.value = null
+                    } else {
+                        _errorData.value = "Город не найден"
                     }
                 }
 
-                override fun onFailure(call: Call<WeatherForecast>, t: Throwable) {  }
+                override fun onFailure(call: Call<WeatherForecast>, t: Throwable) {
+                    _errorData.value = "Ошибка соединения"
+                }
             })
         }
+    }
+
+    fun clearErrors() {
+        _errorData.value = null
     }
 }
