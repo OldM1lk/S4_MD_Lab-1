@@ -1,5 +1,6 @@
 package com.example.lab_1
 
+import android.annotation.SuppressLint
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -47,6 +48,7 @@ class WeatherViewModel: ViewModel() {
         _isCelsius.value = !_isCelsius.value!!
     }
 
+    @SuppressLint("DefaultLocale")
     fun convertTemperature(temp: Double): String {
         return if (_isCelsius.value == true) {
             String.format("%.0f °C", temp - 273.15)
