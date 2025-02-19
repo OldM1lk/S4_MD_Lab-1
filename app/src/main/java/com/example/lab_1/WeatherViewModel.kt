@@ -53,7 +53,7 @@ class WeatherViewModel: ViewModel() {
         return if (_isCelsius.value == true) {
             String.format("%.0f °C", temp - 273.15)
         } else {
-            String.format("%.0f °F", temp)
+            String.format("%.0f °F", (temp - 273.15) * 9 / 5 + 32)
         }
     }
 }
